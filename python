@@ -1,0 +1,26 @@
+when the model sees something outside of its known classes (like a pineapple), it shouldn’t confidently say “mango 🍋,” but instead respond like “I don’t know / unfamiliar fruit.”
+import torch
+import torch.nn.functional as F
+
+# pretrained model (e.g., ResNet)
+model.eval()
+
+# Known class centroids in feature space
+class_centroids = {
+    'apple': mu_apple,
+    'banana': mu_banana,
+    'mango': mu_mango
+}
+threshold = 1.2  # tuned using validation OOD data
+
+def predict(img):
+    with torch.no_grad():
+        feats = model.extract_features(img)
+    # Compute distance to each centroid
+    dists = {cls: torch.norm(feats - mu) for cls, mu in class_centroids.items()}
+    min_class, min_dist = min(dists.items(), key=lambda x: x[1])
+
+    if min_dist > threshold:
+        return "Unknown"
+    else:
+        return min_class
